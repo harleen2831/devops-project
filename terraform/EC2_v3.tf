@@ -3,15 +3,38 @@ provider "aws"{
 }
 
 resource "aws_instance" "dpp-ec2" {
+    for_each = toset(["jenkins-master", "build-slave", "ansible"])
     ami = "ami-084568db4383264d4" 
     instance_type = "t2.micro"
     key_name = "devops_keypair"
     //security_groups = ["allow_ssh"]
-    vpc_security_group_ids = [aws_security_group.dpp-sg.id]
+    vpc_security_group_ids = each.key == "jenkins-master" ? [
+        aws_security_group.dpp-sg.id, aws_security_group.dpp-jenkins-sg.id
+    ] : [
+        aws_security_group.dpp-sg.id
+    ]
+
     subnet_id = aws_subnet.dpp-public-subnet-01.id
-for_each = toset(["jenkins-master", "build-slave", "ansible"])
     tags = {
-        Name = "$(each.key)"
+        Name = each.key
+    }
+}
+
+resource "aws_security_group" "dpp-jenkins-sg"{
+    name = "dpp-jenkins-sg"
+    vpc_id = aws_vpc.dpp-vpc.id
+    ingress{
+        from_port = 8080
+        to_port = 8080
+        protocol = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+
+    egress{
+        from_port = 0
+        to_port = 0
+        protocol = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
     }
 }
 
