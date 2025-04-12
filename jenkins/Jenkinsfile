@@ -1,0 +1,15 @@
+pipeline{
+    agent{
+        node{
+            label  'maven'
+        }
+    }
+
+    stages{
+        stage('Checkout code'){
+            steps{
+                git branch: 'main', url: 'https://github.com/chrisregy23/devops-project'
+            }
+        }
+    }
+}
